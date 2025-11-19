@@ -68,6 +68,16 @@ export const authAPI = {
   refreshToken: (refreshToken) => api.post('/auth/refresh', { refreshToken }),
 };
 
+// Users API calls (super-admin only)
+export const usersAPI = {
+  getAll: () => api.get('/users'),
+  getById: (id) => api.get(`/users/${id}`),
+  create: (userData) => api.post('/users', userData),
+  update: (id, userData) => api.put(`/users/${id}`, userData),
+  resetPassword: (id, password) => api.put(`/users/${id}/password`, { password }),
+  delete: (id) => api.delete(`/users/${id}`),
+};
+
 // Books API calls
 export const booksAPI = {
   getAll: (params) => api.get('/books', { params }),

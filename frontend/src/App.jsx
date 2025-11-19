@@ -11,13 +11,15 @@ import Library from './pages/Library';
 import About from './pages/About';
 import Login from './pages/Login';
 import Dashboard from './pages/admin/Dashboard';
+import Users from './pages/admin/Users';
+import Books from './pages/admin/Books';
 import NotFound from './pages/NotFound';
 
 function App() {
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <Router>
+    <AuthProvider>
+      <Router>
+        <ErrorBoundary>
           <div className="flex flex-col min-h-screen">
             <Navbar />
             <main className="flex-grow">
@@ -36,6 +38,22 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/admin/users"
+                  element={
+                    <ProtectedRoute superAdminOnly>
+                      <Users />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/books"
+                  element={
+                    <ProtectedRoute>
+                      <Books />
+                    </ProtectedRoute>
+                  }
+                />
                 
                 {/* 404 Not Found */}
                 <Route path="*" element={<NotFound />} />
@@ -43,9 +61,9 @@ function App() {
             </main>
             <Footer />
           </div>
-        </Router>
-      </AuthProvider>
-    </ErrorBoundary>
+        </ErrorBoundary>
+      </Router>
+    </AuthProvider>
   );
 }
 

@@ -5,17 +5,22 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
+    "server": "nodemon server.js",
     "test": "jest --watchAll --verbose",
     "test:ci": "jest --ci"
   },
-  "keywords": ["library", "blog", "api"],
+  "keywords": [
+    "library",
+    "blog",
+    "api"
+  ],
   "author": "jrwiegsDev",
   "license": "ISC",
   "dependencies": {
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
+    "csv-parser": "^3.2.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-mongo-sanitize": "^2.2.0",

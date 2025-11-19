@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -72,6 +72,39 @@ const Dashboard = () => {
               Manage Posts
             </Link>
           </div>
+
+          {/* User Management Card - Super Admin Only */}
+          {isSuperAdmin && (
+            <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition">
+              <div className="flex items-center mb-4">
+                <div className="bg-green-100 p-3 rounded-lg">
+                  <svg
+                    className="w-8 h-8 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 ml-4">User Management</h2>
+              </div>
+              <p className="text-gray-600 mb-6">
+                Add, edit, and manage admin users. Reset passwords and control access.
+              </p>
+              <Link
+                to="/admin/users"
+                className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition inline-block"
+              >
+                Manage Users
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Stats Coming Soon */}
