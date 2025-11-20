@@ -25,7 +25,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">
+      <div className="bg-gradient-to-r from-amber-600 to-yellow-700 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-5xl font-bold mb-4">Welcome to Brigitte's Library</h1>
           <p className="text-xl mb-8">
@@ -34,13 +34,13 @@ const Home = () => {
           <div className="space-x-4">
             <Link
               to="/library"
-              className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition inline-block"
+              className="bg-white text-amber-900 px-6 py-3 rounded-lg font-semibold hover:bg-amber-50 transition inline-block"
             >
               Explore the Library
             </Link>
             <Link
               to="/about"
-              className="bg-transparent border-2 border-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition inline-block"
+              className="bg-transparent border-2 border-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-amber-900 transition inline-block"
             >
               About Brigitte
             </Link>
@@ -66,7 +66,7 @@ const Home = () => {
                   </span>
                   <Link
                     to={`/blog/${post.slug}`}
-                    className="text-blue-600 hover:text-blue-800 font-medium"
+                    className="text-amber-600 hover:text-amber-700 font-medium"
                   >
                     Read more →
                   </Link>
@@ -81,7 +81,7 @@ const Home = () => {
         <div className="text-center mt-12">
           <Link
             to="/"
-            className="text-blue-600 hover:text-blue-800 font-semibold text-lg"
+            className="text-amber-600 hover:text-amber-700 font-semibold text-lg"
           >
             View all posts →
           </Link>
@@ -97,7 +97,7 @@ const Home = () => {
           </p>
           <Link
             to="/library"
-            className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition inline-block"
+            className="bg-amber-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-amber-700 transition inline-block"
           >
             Browse the Library
           </Link>

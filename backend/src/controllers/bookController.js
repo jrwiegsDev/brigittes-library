@@ -3,7 +3,7 @@ const { searchOpenLibrary, getBookByISBN } = require('../utils/openLibrary');
 
 // @desc    Search Open Library API for books
 // @route   GET /api/books/search
-// @access  Private
+// @access  Public
 const searchBooks = async (req, res, next) => {
   try {
     const { title, author } = req.query;
@@ -18,9 +18,19 @@ const searchBooks = async (req, res, next) => {
     res.json({
       success: true,
       count: results.length,
-      data: results
+      data: results,
+      message: results.length === 0 ? 'No results found or Open Library API is unavailable' : undefined
     });
   } catch (error) {
+    // If it's a timeout/network error, return empty results instead of error
+    if (error.message.includes('Failed to fetch book data from Open Library')) {
+      return res.json({
+        success: true,
+        count: 0,
+        data: [],
+        message: 'Open Library API is currently unavailable. Please try again later.'
+      });
+    }
     next(error);
   }
 };

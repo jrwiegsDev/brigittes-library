@@ -18,10 +18,10 @@ const {
 
 // Public routes
 router.get('/', bookQueryValidation, getBooks);
+router.get('/search', searchBooks); // Open Library search - must be before /:id (public access)
 router.get('/:id', idValidation, getBook);
 
 // Protected routes
-router.get('/api/search', protect, searchBooks); // Open Library search
 router.post('/', protect, createBookValidation, createBook);
 router.put('/:id', protect, updateBookValidation, updateBook);
 router.delete('/:id', protect, idValidation, deleteBook);

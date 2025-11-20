@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { booksAPI } from '../../services/api';
-import { searchOpenLibrary } from '../../utils/openLibrary';
 
 const Books = () => {
   const [books, setBooks] = useState([]);
@@ -49,10 +48,22 @@ const Books = () => {
     
     try {
       setLibrarySearchLoading(true);
-      const results = await searchOpenLibrary(query);
+      const response = await booksAPI.search({ title: query });
+      const results = response.data.data.map(book => ({
+        title: book.title,
+        author: book.author,
+        first_publish_year: book.publicationYear,
+        isbn: book.isbn,
+        cover_url: book.coverImage
+      }));
       setLibrarySearchResults(results);
+      
+      // Show message if API is unavailable
+      if (response.data.message) {
+        setError(response.data.message);
+      }
     } catch (err) {
-      setError('Failed to search Open Library');
+      setError('Failed to search Open Library. The service may be temporarily unavailable.');
     } finally {
       setLibrarySearchLoading(false);
     }
@@ -198,7 +209,7 @@ const Books = () => {
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700"
         >
           <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -220,12 +231,12 @@ const Books = () => {
           placeholder="Search by title or author..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
         />
         <select
           value={filterGenre}
           onChange={(e) => setFilterGenre(e.target.value)}
-          className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
         >
           <option value="">All Genres</option>
           {genres.map(genre => (
@@ -249,7 +260,7 @@ const Books = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{book.title}</h3>
               <p className="text-sm text-gray-600 mb-2">{book.author}</p>
               {book.genre && (
-                <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mb-2">
+                <span className="inline-block bg-amber-50 text-amber-900 text-xs px-2 py-1 rounded mb-2">
                   {book.genre}
                 </span>
               )}
@@ -262,7 +273,7 @@ const Books = () => {
               <div className="flex justify-end space-x-2 mt-4">
                 <button
                   onClick={() => openEditModal(book)}
-                  className="inline-flex items-center px-3 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
+                  className="inline-flex items-center px-3 py-2 border border-yellow-400 rounded-md shadow-sm text-sm font-medium text-amber-900 bg-amber-50 hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition"
                 >
                   <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -270,8 +281,8 @@ const Books = () => {
                   Edit
                 </button>
                 <button
-                  onClick={() => openDeleteModal(book)}
-                  className="inline-flex items-center px-3 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition"
+                  onClick={() => openEditModal(book)}
+                  className="inline-flex items-center px-3 py-2 border border-yellow-400 rounded-md shadow-sm text-sm font-medium text-amber-900 bg-amber-50 hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition"
                 >
                   <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -303,9 +314,9 @@ const Books = () => {
                     <button
                       type="button"
                       onClick={() => setShowLibrarySearchModal(true)}
-                      className="text-sm text-blue-600 hover:text-blue-900"
+                      className="bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
                     >
-                      🔍 Search Open Library
+                      🔍 Click Here to Search Open Library!!
                     </button>
                   </div>
                   
@@ -317,7 +328,7 @@ const Books = () => {
                         required
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                     
@@ -328,7 +339,7 @@ const Books = () => {
                         required
                         value={formData.author}
                         onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                     
@@ -338,7 +349,7 @@ const Books = () => {
                         type="text"
                         value={formData.genre}
                         onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                     
@@ -348,7 +359,7 @@ const Books = () => {
                         type="number"
                         value={formData.publicationYear}
                         onChange={(e) => setFormData({ ...formData, publicationYear: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                     
@@ -358,7 +369,7 @@ const Books = () => {
                         type="text"
                         value={formData.isbn}
                         onChange={(e) => setFormData({ ...formData, isbn: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                     
@@ -370,7 +381,7 @@ const Books = () => {
                         max="10"
                         value={formData.brigittesRating}
                         onChange={(e) => setFormData({ ...formData, brigittesRating: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                     
@@ -380,7 +391,7 @@ const Books = () => {
                         type="url"
                         value={formData.coverImage}
                         onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                     
@@ -390,7 +401,7 @@ const Books = () => {
                         rows="3"
                         value={formData.brigittesNotes}
                         onChange={(e) => setFormData({ ...formData, brigittesNotes: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                     
@@ -401,7 +412,7 @@ const Books = () => {
                         value={formData.tags}
                         onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                         placeholder="fiction, fantasy, award-winner"
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                   </div>
@@ -410,14 +421,14 @@ const Books = () => {
                 <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                   <button
                     type="submit"
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-amber-600 text-base font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:ml-3 sm:w-auto sm:text-sm"
                   >
                     Add Book
                   </button>
                   <button
                     type="button"
                     onClick={() => { setShowAddModal(false); resetForm(); }}
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                   >
                     Cancel
                   </button>
@@ -446,7 +457,7 @@ const Books = () => {
                         required
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                     
@@ -457,7 +468,7 @@ const Books = () => {
                         required
                         value={formData.author}
                         onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                     
@@ -467,7 +478,7 @@ const Books = () => {
                         type="text"
                         value={formData.genre}
                         onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                     
@@ -477,7 +488,7 @@ const Books = () => {
                         type="number"
                         value={formData.publicationYear}
                         onChange={(e) => setFormData({ ...formData, publicationYear: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                     
@@ -487,7 +498,7 @@ const Books = () => {
                         type="text"
                         value={formData.isbn}
                         onChange={(e) => setFormData({ ...formData, isbn: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                     
@@ -499,7 +510,7 @@ const Books = () => {
                         max="10"
                         value={formData.brigittesRating}
                         onChange={(e) => setFormData({ ...formData, brigittesRating: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                     
@@ -509,7 +520,7 @@ const Books = () => {
                         type="url"
                         value={formData.coverImage}
                         onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                     
@@ -519,7 +530,7 @@ const Books = () => {
                         rows="3"
                         value={formData.brigittesNotes}
                         onChange={(e) => setFormData({ ...formData, brigittesNotes: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                     
@@ -529,7 +540,7 @@ const Books = () => {
                         type="text"
                         value={formData.tags}
                         onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
                   </div>
@@ -538,14 +549,14 @@ const Books = () => {
                 <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                   <button
                     type="submit"
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-amber-600 text-base font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:ml-3 sm:w-auto sm:text-sm"
                   >
                     Save Changes
                   </button>
                   <button
                     type="button"
                     onClick={() => { setShowEditModal(false); setSelectedBook(null); resetForm(); }}
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                   >
                     Cancel
                   </button>
@@ -570,7 +581,7 @@ const Books = () => {
                     type="text"
                     placeholder="Search by title, author, or ISBN..."
                     onKeyPress={(e) => e.key === 'Enter' && handleSearchOpenLibrary(e.target.value)}
-                    className="flex-1 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="flex-1 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                   />
                   <button
                     onClick={(e) => {
@@ -578,7 +589,7 @@ const Books = () => {
                       handleSearchOpenLibrary(input.value);
                     }}
                     disabled={librarySearchLoading}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:opacity-50"
                   >
                     {librarySearchLoading ? 'Searching...' : 'Search'}
                   </button>
@@ -658,7 +669,7 @@ const Books = () => {
                 <button
                   type="button"
                   onClick={() => { setShowDeleteModal(false); setSelectedBook(null); }}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                 >
                   Cancel
                 </button>

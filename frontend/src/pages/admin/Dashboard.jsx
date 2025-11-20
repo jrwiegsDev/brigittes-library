@@ -14,9 +14,9 @@ const Dashboard = () => {
           {/* Manage Books Card */}
           <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition">
             <div className="flex items-center mb-4">
-              <div className="bg-blue-100 p-3 rounded-lg">
+              <div className="bg-amber-50 p-3 rounded-lg">
                 <svg
-                  className="w-8 h-8 text-blue-600"
+                  className="w-8 h-8 text-amber-900"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -36,7 +36,7 @@ const Dashboard = () => {
             </p>
             <Link
               to="/admin/books"
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition inline-block"
+              className="bg-amber-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-amber-700 transition inline-block"
             >
               Manage Books
             </Link>

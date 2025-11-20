@@ -6,4 +6,16 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #fffbeb; /* Amber-50 for Hufflepuff warmth */
+}
+
+/* Hufflepuff-themed custom styles */
+@layer utilities {
+  .text-shadow-warm {
+    text-shadow: 2px 2px 4px rgba(120, 53, 15, 0.3);
+  }
+  
+  .shadow-warm {
+    box-shadow: 0 4px 6px -1px rgba(120, 53, 15, 0.2), 0 2px 4px -1px rgba(120, 53, 15, 0.1);
+  }
 }

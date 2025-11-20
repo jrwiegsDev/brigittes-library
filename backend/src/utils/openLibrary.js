@@ -1,5 +1,13 @@
 const axios = require('axios');
 
+// Create axios instance with timeout
+const api = axios.create({
+  timeout: 10000, // 10 second timeout
+  headers: {
+    'User-Agent': 'Brigittes-Library/1.0'
+  }
+});
+
 /**
  * Search Open Library API for books by title and/or author
  * @param {string} title - Book title
@@ -17,7 +25,7 @@ const searchOpenLibrary = async (title = '', author = '') => {
       throw new Error('Please provide at least a title or author');
     }
 
-    const response = await axios.get(`https://openlibrary.org/search.json?${params.toString()}`);
+    const response = await api.get(`https://openlibrary.org/search.json?${params.toString()}`);
     
     if (!response.data || !response.data.docs) {
       return [];
@@ -40,6 +48,13 @@ const searchOpenLibrary = async (title = '', author = '') => {
     return books;
   } catch (error) {
     console.error('Open Library API Error:', error.message);
+    
+    // Return empty array on timeout/network errors instead of throwing
+    if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      console.log('Open Library API timed out - returning empty results');
+      return [];
+    }
+    
     throw new Error('Failed to fetch book data from Open Library');
   }
 };

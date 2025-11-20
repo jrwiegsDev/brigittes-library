@@ -80,7 +80,7 @@ const Library = () => {
 
         {loading ? (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
             <p className="mt-4 text-gray-600">Loading books...</p>
           </div>
         ) : filteredBooks.length === 0 ? (
@@ -122,7 +122,7 @@ const Library = () => {
                     <p className="text-sm text-gray-600 mb-3">{book.author}</p>
                     
                     {book.genre && (
-                      <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mb-2">
+                      <span className="inline-block bg-amber-50 text-amber-900 text-xs px-2 py-1 rounded mb-2">
                         {book.genre}
                       </span>
                     )}

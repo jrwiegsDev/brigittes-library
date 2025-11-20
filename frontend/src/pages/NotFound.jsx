@@ -11,7 +11,7 @@ const NotFound = () => {
         </p>
         <Link
           to="/"
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+          className="bg-amber-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-amber-700 transition"
         >
           Go Home
         </Link>
