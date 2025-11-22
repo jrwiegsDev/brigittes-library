@@ -27,7 +27,7 @@ const bookSchema = new mongoose.Schema({
     type: String,
     trim: true,
     sparse: true, // Allows multiple null values but enforces uniqueness for non-null
-    unique: true,
+    default: null,
     match: [/^(?:\d{10}|\d{13})$/, 'ISBN must be 10 or 13 digits']
   },
   coverImage: {
@@ -50,6 +50,21 @@ const bookSchema = new mongoose.Schema({
     trim: true,
     maxlength: 50
   }],
+  pageCount: {
+    type: Number,
+    min: 1
+  },
+  status: {
+    type: String,
+    enum: ['want-to-read', 'currently-reading', 'read'],
+    default: 'want-to-read'
+  },
+  dateStarted: {
+    type: Date
+  },
+  dateFinished: {
+    type: Date
+  },
   addedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

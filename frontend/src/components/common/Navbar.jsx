@@ -30,6 +30,12 @@ const Navbar = () => {
               Library
             </Link>
             <Link
+              to="/blog"
+              className="hover:text-yellow-400 transition px-3 py-2 rounded-md text-sm font-medium"
+            >
+              Blog
+            </Link>
+            <Link
               to="/about"
               className="hover:text-yellow-400 transition px-3 py-2 rounded-md text-sm font-medium"
             >

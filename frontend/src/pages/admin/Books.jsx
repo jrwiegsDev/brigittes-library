@@ -7,6 +7,10 @@ const Books = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGenre, setFilterGenre] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterRating, setFilterRating] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [booksPerPage] = useState(24); // Show 24 books per page (4x6 grid)
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -23,17 +27,32 @@ const Books = () => {
     coverImage: '',
     brigittesRating: '',
     brigittesNotes: '',
-    tags: ''
+    tags: '',
+    status: 'want-to-read'
   });
+
+  // Helper function to get cover image URL from ISBN
+  const getCoverImageUrl = (book) => {
+    if (book.coverImage) return book.coverImage;
+    if (book.isbn) {
+      return `https://covers.openlibrary.org/b/isbn/${book.isbn}-M.jpg`;
+    }
+    return null;
+  };
 
   useEffect(() => {
     fetchBooks();
   }, []);
 
+  // Reset to page 1 when search/filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterGenre, filterStatus, filterRating]);
+
   const fetchBooks = async () => {
     try {
       setLoading(true);
-      const response = await booksAPI.getAll();
+      const response = await booksAPI.getAll({ limit: 2000 }); // Get all books for client-side filtering
       setBooks(response.data.data);
       setError('');
     } catch (err) {
@@ -97,7 +116,8 @@ const Books = () => {
         coverImage: formData.coverImage || undefined,
         brigittesRating: formData.brigittesRating ? parseFloat(formData.brigittesRating) : undefined,
         brigittesNotes: formData.brigittesNotes || undefined,
-        tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : []
+        tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        status: formData.status || 'want-to-read'
       };
       
       await booksAPI.create(bookData);
@@ -122,7 +142,8 @@ const Books = () => {
         coverImage: formData.coverImage || undefined,
         brigittesRating: formData.brigittesRating ? parseFloat(formData.brigittesRating) : undefined,
         brigittesNotes: formData.brigittesNotes || undefined,
-        tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : []
+        tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+        status: formData.status || 'want-to-read'
       };
       
       await booksAPI.update(selectedBook._id, bookData);
@@ -158,7 +179,8 @@ const Books = () => {
       coverImage: book.coverImage || '',
       brigittesRating: book.brigittesRating || '',
       brigittesNotes: book.brigittesNotes || '',
-      tags: book.tags ? book.tags.join(', ') : ''
+      tags: book.tags ? book.tags.join(', ') : '',
+      status: book.status || 'want-to-read'
     });
     setShowEditModal(true);
   };
@@ -178,17 +200,37 @@ const Books = () => {
       coverImage: '',
       brigittesRating: '',
       brigittesNotes: '',
-      tags: ''
+      tags: '',
+      status: 'want-to-read'
     });
   };
 
-  const filteredBooks = books.filter(book => {
-    const matchesSearch = !searchTerm || 
-      book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      book.author.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesGenre = !filterGenre || book.genre === filterGenre;
-    return matchesSearch && matchesGenre;
-  });
+  const filteredBooks = books
+    .filter(book => {
+      const matchesSearch = !searchTerm || 
+        book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        book.author.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesGenre = !filterGenre || book.genre === filterGenre;
+      const matchesStatus = !filterStatus || book.status === filterStatus;
+      const matchesRating = !filterRating || (
+        filterRating === '8+' ? (book.brigittesRating >= 8) :
+        filterRating === '5-7' ? (book.brigittesRating >= 5 && book.brigittesRating < 8) :
+        filterRating === '0-4' ? (book.brigittesRating < 5) :
+        filterRating === 'unrated' ? (!book.brigittesRating) : true
+      );
+      return matchesSearch && matchesGenre && matchesStatus && matchesRating;
+    })
+    .sort((a, b) => a.title.localeCompare(b.title));
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredBooks.length / booksPerPage);
+  const indexOfLastBook = currentPage * booksPerPage;
+  const indexOfFirstBook = indexOfLastBook - booksPerPage;
+  const currentBooks = filteredBooks.slice(indexOfFirstBook, indexOfLastBook);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
 
   const genres = [...new Set(books.map(b => b.genre).filter(Boolean))];
 
@@ -225,7 +267,7 @@ const Books = () => {
       )}
 
       {/* Search and Filter */}
-      <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <input
           type="text"
           placeholder="Search by title or author..."
@@ -243,24 +285,53 @@ const Books = () => {
             <option key={genre} value={genre}>{genre}</option>
           ))}
         </select>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+        >
+          <option value="">All Reading Status</option>
+          <option value="read">Read</option>
+          <option value="currently-reading">Currently Reading</option>
+          <option value="want-to-read">Want to Read</option>
+        </select>
+        <select
+          value={filterRating}
+          onChange={(e) => setFilterRating(e.target.value)}
+          className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+        >
+          <option value="">All Ratings</option>
+          <option value="8+">⭐ 8+ (Excellent)</option>
+          <option value="5-7">⭐ 5-7 (Good)</option>
+          <option value="0-4">⭐ 0-4 (Fair)</option>
+          <option value="unrated">Unrated</option>
+        </select>
       </div>
 
       <div className="text-sm text-gray-600 mb-4">
-        Showing {filteredBooks.length} of {books.length} books
+        Showing {indexOfFirstBook + 1}-{Math.min(indexOfLastBook, filteredBooks.length)} of {filteredBooks.length} books
+        {filteredBooks.length !== books.length && ` (filtered from ${books.length} total)`}
       </div>
 
       {/* Books Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredBooks.map((book) => (
-          <div key={book._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
-            {book.coverImage && (
-              <img src={book.coverImage} alt={book.title} className="w-full h-48 object-cover" />
-            )}
-            <div className="p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{book.title}</h3>
-              <p className="text-sm text-gray-600 mb-2">{book.author}</p>
-              {book.genre && (
-                <span className="inline-block bg-amber-50 text-amber-900 text-xs px-2 py-1 rounded mb-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+        {currentBooks.map((book) => {
+          const coverUrl = getCoverImageUrl(book);
+          return (
+            <div key={book._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+              {coverUrl && (
+                <img 
+                  src={coverUrl} 
+                  alt={book.title} 
+                  className="w-full h-48 object-cover"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              )}
+              <div className="p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{book.title}</h3>
+                <p className="text-sm text-gray-600 mb-2">{book.author}</p>
+                {book.genre && (
+                  <span className="inline-block bg-amber-50 text-amber-900 text-xs px-2 py-1 rounded mb-2">
                   {book.genre}
                 </span>
               )}
@@ -281,8 +352,8 @@ const Books = () => {
                   Edit
                 </button>
                 <button
-                  onClick={() => openEditModal(book)}
-                  className="inline-flex items-center px-3 py-2 border border-yellow-400 rounded-md shadow-sm text-sm font-medium text-amber-900 bg-amber-50 hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition"
+                  onClick={() => openDeleteModal(book)}
+                  className="inline-flex items-center px-3 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition"
                 >
                   <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -292,8 +363,62 @@ const Books = () => {
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
+
+      {/* Pagination Controls */}
+      {filteredBooks.length > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-center space-x-2 mt-8 mb-8">
+          <button
+            onClick={prevPage}
+            disabled={currentPage === 1}
+            className="px-4 py-2 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          
+          <div className="flex space-x-1">
+            {[...Array(totalPages)].map((_, index) => {
+              const pageNumber = index + 1;
+              // Show first page, last page, current page, and pages around current
+              if (
+                pageNumber === 1 ||
+                pageNumber === totalPages ||
+                (pageNumber >= currentPage - 2 && pageNumber <= currentPage + 2)
+              ) {
+                return (
+                  <button
+                    key={pageNumber}
+                    onClick={() => paginate(pageNumber)}
+                    className={`px-4 py-2 border rounded-md text-sm font-medium ${
+                      currentPage === pageNumber
+                        ? 'bg-amber-600 text-white border-amber-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              } else if (
+                pageNumber === currentPage - 3 ||
+                pageNumber === currentPage + 3
+              ) {
+                return <span key={pageNumber} className="px-2 py-2 text-gray-500">...</span>;
+              }
+              return null;
+            })}
+          </div>
+
+          <button
+            onClick={nextPage}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {filteredBooks.length === 0 && (
         <div className="text-center py-12">
@@ -345,12 +470,16 @@ const Books = () => {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Genre</label>
-                      <input
-                        type="text"
+                      <select
                         value={formData.genre}
                         onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
-                      />
+                      >
+                        <option value="">Select a genre...</option>
+                        {genres.map((genre) => (
+                          <option key={genre} value={genre}>{genre}</option>
+                        ))}
+                      </select>
                     </div>
                     
                     <div>
@@ -374,15 +503,30 @@ const Books = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Brigitte's Rating (0-10)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="10"
+                      <label className="block text-sm font-medium text-gray-700">Brigitte's Rating</label>
+                      <select
                         value={formData.brigittesRating}
                         onChange={(e) => setFormData({ ...formData, brigittesRating: e.target.value })}
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
-                      />
+                      >
+                        <option value="">Select a rating...</option>
+                        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
+                          <option key={rating} value={rating}>{rating}</option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Reading Status</label>
+                      <select
+                        value={formData.status}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                      >
+                        <option value="want-to-read">Want to Read</option>
+                        <option value="currently-reading">Currently Reading</option>
+                        <option value="read">Read</option>
+                      </select>
                     </div>
                     
                     <div className="md:col-span-2">
@@ -474,12 +618,16 @@ const Books = () => {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Genre</label>
-                      <input
-                        type="text"
+                      <select
                         value={formData.genre}
                         onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
-                      />
+                      >
+                        <option value="">Select a genre...</option>
+                        {genres.map((genre) => (
+                          <option key={genre} value={genre}>{genre}</option>
+                        ))}
+                      </select>
                     </div>
                     
                     <div>
@@ -503,15 +651,30 @@ const Books = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Brigitte's Rating (0-10)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="10"
+                      <label className="block text-sm font-medium text-gray-700">Brigitte's Rating</label>
+                      <select
                         value={formData.brigittesRating}
                         onChange={(e) => setFormData({ ...formData, brigittesRating: e.target.value })}
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
-                      />
+                      >
+                        <option value="">Select a rating...</option>
+                        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
+                          <option key={rating} value={rating}>{rating}</option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Reading Status</label>
+                      <select
+                        value={formData.status}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                      >
+                        <option value="want-to-read">Want to Read</option>
+                        <option value="currently-reading">Currently Reading</option>
+                        <option value="read">Read</option>
+                      </select>
                     </div>
                     
                     <div className="md:col-span-2">
