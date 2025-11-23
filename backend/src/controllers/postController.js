@@ -5,7 +5,7 @@ const BlogPost = require('../models/BlogPost');
 // @access  Public
 const getPosts = async (req, res, next) => {
   try {
-    const { tag, page = 1, limit = 10 } = req.query;
+    const { tag, topic, page = 1, limit = 10 } = req.query;
 
     // Build query - only show published posts to public
     const query = { status: 'published' };
@@ -13,6 +13,11 @@ const getPosts = async (req, res, next) => {
     // Filter by tag
     if (tag) {
       query.tags = tag;
+    }
+
+    // Filter by topic
+    if (topic) {
+      query.topic = topic;
     }
 
     // Calculate pagination

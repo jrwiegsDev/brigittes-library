@@ -7,19 +7,19 @@ const Blog = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTag, setSelectedTag] = useState('');
+  const [selectedTopic, setSelectedTopic] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     fetchPosts();
-  }, [currentPage, selectedTag]);
+  }, [currentPage, selectedTopic]);
 
   const fetchPosts = async () => {
     try {
       setLoading(true);
       const params = { page: currentPage, limit: 9 };
-      if (selectedTag) params.tag = selectedTag;
+      if (selectedTopic) params.topic = selectedTopic;
       
       const response = await postsAPI.getAll(params);
       setPosts(response.data.data);
@@ -33,8 +33,8 @@ const Blog = () => {
     }
   };
 
-  // Get all unique tags from posts
-  const allTags = [...new Set(posts.flatMap(post => post.tags || []))].sort();
+  // Define available topics
+  const topics = ['Books', 'Family', 'Career', 'Life', 'Movies', 'TV Shows', 'General', 'Headaches'];
 
   // Filter posts by search term (client-side for now)
   const filteredPosts = posts.filter(post =>
@@ -88,13 +88,13 @@ const Blog = () => {
             className="px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
           />
           <select
-            value={selectedTag}
-            onChange={(e) => { setSelectedTag(e.target.value); setCurrentPage(1); }}
+            value={selectedTopic}
+            onChange={(e) => { setSelectedTopic(e.target.value); setCurrentPage(1); }}
             className="px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
           >
             <option value="">All Topics</option>
-            {allTags.map(tag => (
-              <option key={tag} value={tag}>{tag}</option>
+            {topics.map(topic => (
+              <option key={topic} value={topic}>{topic}</option>
             ))}
           </select>
         </div>

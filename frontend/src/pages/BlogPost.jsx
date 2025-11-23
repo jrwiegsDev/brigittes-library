@@ -223,6 +223,15 @@ const BlogPost = () => {
             </div>
           </div>
 
+          {/* Topic Badge */}
+          {post.topic && (
+            <div className="mb-4">
+              <span className="inline-block bg-amber-600 text-white text-sm font-semibold px-4 py-1.5 rounded-full">
+                {post.topic}
+              </span>
+            </div>
+          )}
+
           {post.tags && post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {post.tags.map((tag, index) => (

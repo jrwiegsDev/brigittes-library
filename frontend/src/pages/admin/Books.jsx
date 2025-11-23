@@ -319,14 +319,22 @@ const Books = () => {
           const coverUrl = getCoverImageUrl(book);
           return (
             <div key={book._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
-              {coverUrl && (
-                <img 
-                  src={coverUrl} 
-                  alt={book.title} 
-                  className="w-full h-48 object-cover"
-                  onError={(e) => { e.target.style.display = 'none'; }}
-                />
-              )}
+              <div className="relative w-full h-48 bg-gradient-to-br from-amber-100 to-yellow-100">
+                {coverUrl ? (
+                  <img 
+                    src={coverUrl} 
+                    alt={book.title} 
+                    className="w-full h-full object-cover"
+                    onError={(e) => { 
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div className="absolute inset-0 flex items-center justify-center" style={{ display: coverUrl ? 'none' : 'flex' }}>
+                  <span className="text-7xl">📚</span>
+                </div>
+              </div>
               <div className="p-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{book.title}</h3>
                 <p className="text-sm text-gray-600 mb-2">{book.author}</p>
@@ -592,6 +600,26 @@ const Books = () => {
               <form onSubmit={handleEditBook}>
                 <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                   <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Edit Book</h3>
+                  
+                  {/* Cover Image Preview */}
+                  <div className="mb-6 flex justify-center">
+                    <div className="relative w-40 h-60 bg-gradient-to-br from-amber-100 to-yellow-100 rounded-lg shadow-md overflow-hidden">
+                      {getCoverImageUrl(selectedBook) ? (
+                        <img
+                          src={getCoverImageUrl(selectedBook)}
+                          alt={selectedBook.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div className="absolute inset-0 flex items-center justify-center" style={{ display: getCoverImageUrl(selectedBook) ? 'none' : 'flex' }}>
+                        <span className="text-8xl">📚</span>
+                      </div>
+                    </div>
+                  </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">

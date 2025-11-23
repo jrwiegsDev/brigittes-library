@@ -177,12 +177,14 @@ const Users = () => {
                   >
                     Edit
                   </button>
-                  <button
-                    onClick={() => openDeleteModal(user)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Delete
-                  </button>
+                  {user.role !== 'super-admin' && (
+                    <button
+                      onClick={() => openDeleteModal(user)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

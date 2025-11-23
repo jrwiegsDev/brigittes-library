@@ -11,6 +11,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const bookRoutes = require('./routes/books');
 const postRoutes = require('./routes/posts');
+const statsRoutes = require('./routes/stats');
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {

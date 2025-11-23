@@ -14,9 +14,14 @@ const Posts = () => {
     title: '',
     content: null,
     excerpt: '',
+    topic: 'General',
     tags: '',
-    status: 'draft'
+    status: 'draft',
+    isPreviousPost: false,
+    customDate: ''
   });
+
+  const topics = ['Books', 'Family', 'Career', 'Life', 'Movies', 'TV Shows', 'General', 'Headaches'];
 
   useEffect(() => {
     fetchPosts();
@@ -46,6 +51,11 @@ const Posts = () => {
         tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
         status: formData.status
       };
+      
+      // If it's a previous post with custom date, add publishedAt
+      if (formData.isPreviousPost && formData.customDate) {
+        postData.publishedAt = new Date(formData.customDate).toISOString();
+      }
 
       await postsAPI.create(postData);
       setShowAddModal(false);
@@ -64,9 +74,15 @@ const Posts = () => {
         title: formData.title,
         content: formData.content,
         excerpt: formData.excerpt || undefined,
+        topic: formData.topic,
         tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
         status: formData.status
       };
+      
+      // If it's a previous post with custom date, add publishedAt
+      if (formData.isPreviousPost && formData.customDate) {
+        postData.publishedAt = new Date(formData.customDate).toISOString();
+      }
 
       await postsAPI.update(selectedPost._id, postData);
       setShowEditModal(false);
@@ -90,14 +106,43 @@ const Posts = () => {
     }
   };
 
+  const handlePublishPost = async (post) => {
+    try {
+      const postData = {
+        title: post.title,
+        content: post.content,
+        excerpt: post.excerpt || undefined,
+        topic: post.topic || 'General',
+        tags: post.tags || [],
+        status: 'published'
+      };
+      
+      // If the post doesn't have a publishedAt date, set it to now
+      if (!post.publishedAt) {
+        postData.publishedAt = new Date().toISOString();
+      }
+
+      await postsAPI.update(post._id, postData);
+      fetchPosts();
+      setError('');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to publish post');
+    }
+  };
+
   const openEditModal = (post) => {
     setSelectedPost(post);
+    // Check if post has a publishedAt date (could be from previous post or regular publish)
+    const hasPublishedDate = !!post.publishedAt;
     setFormData({
       title: post.title,
       content: post.content,
       excerpt: post.excerpt || '',
+      topic: post.topic || 'General',
       tags: post.tags ? post.tags.join(', ') : '',
-      status: post.status
+      status: post.status,
+      isPreviousPost: hasPublishedDate,
+      customDate: hasPublishedDate ? new Date(post.publishedAt).toISOString().split('T')[0] : ''
     });
     setShowEditModal(true);
   };
@@ -112,8 +157,11 @@ const Posts = () => {
       title: '',
       content: null,
       excerpt: '',
+      topic: 'General',
       tags: '',
-      status: 'draft'
+      status: 'draft',
+      isPreviousPost: false,
+      customDate: ''
     });
   };
 
@@ -170,75 +218,145 @@ const Posts = () => {
         </div>
       )}
 
-      {/* Posts List */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-        <ul className="divide-y divide-gray-200">
-          {posts.length === 0 ? (
-            <li className="px-6 py-12 text-center text-gray-500">
-              No posts yet. Create your first post!
-            </li>
-          ) : (
-            posts.map((post) => (
-              <li key={post._id} className="px-6 py-4 hover:bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-medium text-gray-900 truncate">
-                        {post.title}
-                      </h3>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        post.status === 'published' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {post.status}
-                      </span>
-                    </div>
-                    
-                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                      {getExcerpt(post)}
-                    </p>
-                    
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      {post.publishedAt && (
-                        <span>Published: {formatDate(post.publishedAt)}</span>
-                      )}
-                      {!post.publishedAt && (
+      {/* Two Column Layout for Draft and Published Posts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Draft Posts Section */}
+        <div>
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold text-gray-900">Draft Posts</h2>
+            <p className="text-sm text-gray-600">Posts you're working on - only visible to you</p>
+          </div>
+          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+            <ul className="divide-y divide-gray-200">
+              {posts.filter(post => post.status === 'draft').length === 0 ? (
+                <li className="px-6 py-12 text-center text-gray-500">
+                  No draft posts. Create a new post to get started!
+                </li>
+              ) : (
+                posts.filter(post => post.status === 'draft').map((post) => (
+                  <li key={post._id} className="px-6 py-4 hover:bg-gray-50">
+                    <div className="mb-3">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <h3 className="text-lg font-medium text-gray-900 truncate">
+                          {post.title}
+                        </h3>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          draft
+                        </span>
+                      </div>
+                      
+                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                        {getExcerpt(post)}
+                      </p>
+                      
+                      <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
                         <span>Created: {formatDate(post.createdAt)}</span>
-                      )}
-                      <span>•</span>
-                      <span className="flex items-center">
-                        <span className="text-red-500 mr-1">❤️</span>
-                        {post.likes || 0}
-                      </span>
-                      {post.tags && post.tags.length > 0 && (
-                        <>
-                          <span>•</span>
-                          <span>{post.tags.join(', ')}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
+                        {post.tags && post.tags.length > 0 && (
+                          <>
+                            <span>•</span>
+                            <span>{post.tags.join(', ')}</span>
+                          </>
+                        )}
+                      </div>
 
-                  <div className="ml-4 flex items-center space-x-2">
-                    <button
-                      onClick={() => openEditModal(post)}
-                      className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => openDeleteModal(post)}
-                      className="inline-flex items-center px-3 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))
-          )}
-        </ul>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handlePublishPost(post)}
+                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        >
+                          <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Publish
+                        </button>
+                        <button
+                          onClick={() => openEditModal(post)}
+                          className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => openDeleteModal(post)}
+                          className="inline-flex items-center px-3 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+        </div>
+
+        {/* Published Posts Section */}
+        <div>
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold text-gray-900">Published Posts</h2>
+            <p className="text-sm text-gray-600">Posts visible to the public on your blog</p>
+          </div>
+          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+            <ul className="divide-y divide-gray-200">
+              {posts.filter(post => post.status === 'published').length === 0 ? (
+                <li className="px-6 py-12 text-center text-gray-500">
+                  No published posts yet. Publish a draft to share it with the world!
+                </li>
+              ) : (
+                posts.filter(post => post.status === 'published').map((post) => (
+                  <li key={post._id} className="px-6 py-4 hover:bg-gray-50">
+                    <div className="mb-3">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <h3 className="text-lg font-medium text-gray-900 truncate">
+                          {post.title}
+                        </h3>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          published
+                        </span>
+                      </div>
+                      
+                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                        {getExcerpt(post)}
+                      </p>
+                      
+                      <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                        {post.publishedAt && (
+                          <span>Published: {formatDate(post.publishedAt)}</span>
+                        )}
+                        <span>•</span>
+                        <span className="flex items-center">
+                          <span className="text-red-500 mr-1">❤️</span>
+                          {post.likes || 0}
+                        </span>
+                        {post.tags && post.tags.length > 0 && (
+                          <>
+                            <span>•</span>
+                            <span>{post.tags.join(', ')}</span>
+                          </>
+                        )}
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => openEditModal(post)}
+                          className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => openDeleteModal(post)}
+                          className="inline-flex items-center px-3 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+        </div>
       </div>
 
       {/* Add Post Modal */}
@@ -284,6 +402,20 @@ const Posts = () => {
                     </div>
 
                     <div>
+                      <label className="block text-sm font-medium text-gray-700">Topic *</label>
+                      <select
+                        required
+                        value={formData.topic}
+                        onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                      >
+                        {topics.map((topic) => (
+                          <option key={topic} value={topic}>{topic}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
                       <label className="block text-sm font-medium text-gray-700">Tags (comma-separated)</label>
                       <input
                         type="text"
@@ -304,6 +436,38 @@ const Posts = () => {
                         <option value="draft">Draft</option>
                         <option value="published">Published</option>
                       </select>
+                    </div>
+
+                    <div className="border-t border-gray-200 pt-4">
+                      <div className="flex items-center mb-3">
+                        <input
+                          type="checkbox"
+                          id="isPreviousPost-add"
+                          checked={formData.isPreviousPost}
+                          onChange={(e) => setFormData({ ...formData, isPreviousPost: e.target.checked, customDate: e.target.checked ? formData.customDate : '' })}
+                          className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="isPreviousPost-add" className="ml-2 block text-sm font-medium text-gray-700">
+                          Previous Post? (Set a custom date from the past)
+                        </label>
+                      </div>
+                      
+                      {formData.isPreviousPost && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Post Date *</label>
+                          <input
+                            type="date"
+                            required={formData.isPreviousPost}
+                            value={formData.customDate}
+                            max={new Date().toISOString().split('T')[0]}
+                            onChange={(e) => setFormData({ ...formData, customDate: e.target.value })}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                          />
+                          <p className="mt-1 text-sm text-gray-500">
+                            Select the date when this post was originally written
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -372,6 +536,20 @@ const Posts = () => {
                     </div>
 
                     <div>
+                      <label className="block text-sm font-medium text-gray-700">Topic *</label>
+                      <select
+                        required
+                        value={formData.topic}
+                        onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                      >
+                        {topics.map((topic) => (
+                          <option key={topic} value={topic}>{topic}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
                       <label className="block text-sm font-medium text-gray-700">Tags (comma-separated)</label>
                       <input
                         type="text"
@@ -392,6 +570,38 @@ const Posts = () => {
                         <option value="draft">Draft</option>
                         <option value="published">Published</option>
                       </select>
+                    </div>
+
+                    <div className="border-t border-gray-200 pt-4">
+                      <div className="flex items-center mb-3">
+                        <input
+                          type="checkbox"
+                          id="isPreviousPost-edit"
+                          checked={formData.isPreviousPost}
+                          onChange={(e) => setFormData({ ...formData, isPreviousPost: e.target.checked, customDate: e.target.checked ? formData.customDate : '' })}
+                          className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="isPreviousPost-edit" className="ml-2 block text-sm font-medium text-gray-700">
+                          Previous Post? (Set a custom date from the past)
+                        </label>
+                      </div>
+                      
+                      {formData.isPreviousPost && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Post Date *</label>
+                          <input
+                            type="date"
+                            required={formData.isPreviousPost}
+                            value={formData.customDate}
+                            max={new Date().toISOString().split('T')[0]}
+                            onChange={(e) => setFormData({ ...formData, customDate: e.target.value })}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                          />
+                          <p className="mt-1 text-sm text-gray-500">
+                            Select the date when this post was originally written
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

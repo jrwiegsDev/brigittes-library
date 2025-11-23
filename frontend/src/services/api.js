@@ -100,4 +100,9 @@ export const postsAPI = {
   like: (id) => api.post(`/posts/${id}/like`),
 };
 
+// Stats API calls
+export const statsAPI = {
+  getStats: () => api.get('/stats'),
+};
+
 export default api;

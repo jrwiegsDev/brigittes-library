@@ -22,6 +22,11 @@ const blogPostSchema = new mongoose.Schema({
     trim: true,
     maxlength: 500
   },
+  topic: {
+    type: String,
+    enum: ['Books', 'Family', 'Career', 'Life', 'Movies', 'TV Shows', 'General', 'Headaches'],
+    default: 'General'
+  },
   tags: [{
     type: String,
     trim: true,
@@ -55,6 +60,7 @@ const blogPostSchema = new mongoose.Schema({
 // Indexes
 blogPostSchema.index({ status: 1, publishedAt: -1 });
 blogPostSchema.index({ tags: 1 });
+blogPostSchema.index({ topic: 1 });
 blogPostSchema.index({ title: 'text', excerpt: 'text' });
 
 // Auto-generate slug from title before saving
